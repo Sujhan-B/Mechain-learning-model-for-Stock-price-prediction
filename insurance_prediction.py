@@ -1,40 +1,51 @@
 import pandas as pd
-from matplotlib import pyplot as plt
+import math
+import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-import math
+import matplotlib.pyplot as plt
 
-# Load data
-df = pd.read_csv("C:/Users/sujan/Downloads/insurance_data.csv")
-print(df.head())
+st.set_page_config(page_title="Insurance Predictor", layout="centered")
+st.title("🧠 Logistic Regression - Insurance Buying Predictor")
+st.markdown("Predict the **probability** of someone buying insurance based on their age.")
 
-# Plotting
-plt.scatter(df.age, df.bought_insurance, marker="*", color="red")
+# Load the data
+df = pd.read_csv("path to the data")
+
+# Show data
+with st.expander("📋 View Raw Data"):
+    st.dataframe(df)
+
+# Scatter Plot
+st.subheader("📈 Age vs Bought Insurance")
+fig, ax = plt.subplots()
+ax.scatter(df.age, df.bought_insurance, marker='*', color='red')
 plt.xlabel("Age")
 plt.ylabel("Bought Insurance")
-plt.title("Age vs Insurance Buying")
-plt.show()
+st.pyplot(fig)
 
-# Train-test split
+# Split and train model
 x_tr, x_te, y_tr, y_te = train_test_split(df[['age']], df.bought_insurance, train_size=0.8, random_state=42)
-
-# Train the model
 model = LogisticRegression()
 model.fit(x_tr, y_tr)
 
-# Predict
-y_pre = model.predict(x_te)
-print("Predictions:", y_pre)
+# Prediction function
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
 
-# 🔧 Fix your sigmoid and prediction manually
-def sig(x):
-    return 1 / (1 + math.exp(-x))  # 🛠️ added colon and minus sign
+def predict_probability(age):
+    z = model.coef_[0][0] * age + model.intercept_[0]
+    return sigmoid(z)
 
-def predi(a):
-    z = model.coef_[0][0] * a + model.intercept_[0]  # uses real model values
-    y = sig(z)
-    return y
+# User input
+st.subheader("🔮 Predict for Custom Age")
+age_input = st.number_input("Enter Age", min_value=1, max_value=100, value=25)
 
-# Test prediction for age 56
-a = 56
-print(f"Probability of buying insurance at age {a}: {predi(a):.2f}")
+if st.button("Predict"):
+    prob = predict_probability(age_input)
+    st.success(f"Probability of buying insurance at age {age_input}: **{prob*100:.2f}%**")
+
+    if prob > 0.5:
+        st.markdown("🟢 Likely to buy insurance.")
+    else:
+        st.markdown("🔴 Unlikely to buy insurance.")
